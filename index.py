@@ -19,7 +19,7 @@ from plotly.subplots import make_subplots
 #    st.dataframe(df)
 
 # Caminho do CSV
-df = pd.read_csv('./data/DATA.CSV.cvs', sep=';', names=["DataHora", "Valores"])
+df = pd.read_csv('data/DATA.CSV.cvs', sep=';', names=["DataHora", "Valores"])
 
 # Separando colunas
 df[['Temperatura', 'Umidade', 'Pressao']] = df['Valores'].str.split(",", expand=True).astype(float)
