@@ -6,20 +6,32 @@ from plotly.subplots import make_subplots
 
 
 # Upa o arquivo CSV
-#uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=["csv", "xls"])
-#if uploaded_file is not None:
-#    # Para CSV
-#    if uploaded_file.name.endswith(".csv"):
-#        df = pd.read_csv(uploaded_file, sep=';', names=["DataHora", "Valor"])
-#    # Para Excel
-#    elif uploaded_file.name.endswith(".xls") or uploaded_file.name.endswith(".xlsx"):
-#        df = pd.read_excel(uploaded_file, names=["DataHora", "Valor"])
-#    
-#    st.write("Prévia dos dados:")
+uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=["csv", "xls"])
+if uploaded_file is not None:
+    # Para CSV
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file, sep=';', names=["DataHora", "Valores"])
+    # Para Excel
+    elif uploaded_file.name.endswith(".xls") or uploaded_file.name.endswith(".xlsx"):
+        df = pd.read_excel(uploaded_file, names=["DataHora", "Valores"])
+    
+ #   st.write("Prévia dos dados:")
 #    st.dataframe(df)
 
+def main():
+    st.title("Dados da Estação Meteorologica de Baixo Custo") 
+
+    st.header("Grafico de Temperatura")
+    st.plotly_chart(fig_temp, use_container_width=True)
+    st.header("Grafico de Umidade")
+    st.plotly_chart(fig_umid, use_container_width=True)
+    st.header("Grafico de Pressao")
+    st.plotly_chart(fig_press, use_container_width=True)
+main()
+
+
 # Caminho do CSV
-df = pd.read_csv('./data/DATA.csv', sep=';', names=["DataHora", "Valores"])
+df = pd.read_csv('./DATA.csv', sep=';', names=["DataHora", "Valores"])
 
 # Separando colunas
 df[['Temperatura', 'Umidade', 'Pressao']] = df['Valores'].str.split(",", expand=True).astype(float)
@@ -48,7 +60,7 @@ fig_temp.update_layout(
     title=f"Temperatura (°C) — {data_inicial} até {data_final}",
     xaxis=dict(
         title='Data',
-       # rangeslider=dict(visible=True),
+        rangeslider=dict(visible=True),
         type='date',
         showgrid=True
     ),
@@ -72,7 +84,7 @@ fig_umid.update_layout(
     title=f"Umidade Relativa (%) — {data_inicial} até {data_final}",
     xaxis=dict(
         title='Data',
-       # rangeslider=dict(visible=True),
+        rangeslider=dict(visible=True),
         type='date',
         showgrid=True
     ),
@@ -96,7 +108,7 @@ fig_press.update_layout(
     title=f"Pressao (hPa) — {data_inicial} até {data_final}",
     xaxis=dict(
         title='Data',
-       # rangeslider=dict(visible=True),
+        rangeslider=dict(visible=True),
         type='date',
         showgrid=True
     ),
@@ -105,20 +117,3 @@ fig_press.update_layout(
     height=400
 )
 
-
-# Mostrar os dois
-#fig_temp.show()
-#fig_umid.show()
-#fig_press.show()
-
-def main():
-    st.title("Meteorologic Station Web")
-
-    st.header("Grafico de Temperatura")
-    st.plotly_chart(fig_temp, use_container_width=True)
-    st.header("Grafico de Umidade")
-    st.plotly_chart(fig_umid, use_container_width=True)
-    st.header("Grafico de Pressao")
-    st.plotly_chart(fig_press, use_container_width=True)
-
-main()
