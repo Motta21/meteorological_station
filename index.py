@@ -1,127 +1,117 @@
 import streamlit as st
-import time 
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import os
 
+# Verifica se o arquivo existe
+csv_path = './data/DATA.csv'
+if not os.path.exists(csv_path):
+    st.error("O arquivo CSV não foi encontrado no diretório especificado.")
+else:
+    # Carrega o CSV
+    df = pd.read_csv(csv_path, sep=';', names=["DataHora", "Valores"])
 
-# Upa o arquivo CSV
-#uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=["csv", "xls"])
-#if uploaded_file is not None:
-#    # Para CSV
-#    if uploaded_file.name.endswith(".csv"):
-#        df = pd.read_csv(uploaded_file, sep=';', names=["DataHora", "Valor"])
-#    # Para Excel
-#    elif uploaded_file.name.endswith(".xls") or uploaded_file.name.endswith(".xlsx"):
-#        df = pd.read_excel(uploaded_file, names=["DataHora", "Valor"])
-#    
-#    st.write("Prévia dos dados:")
-#    st.dataframe(df)
+    # Verifica se há valores na coluna 'Valores'
+    if df['Valores'].isnull().any():
+        st.warning("Há valores nulos na coluna 'Valores'. Certifique-se de que os dados estejam corretos.")
+    
+    # Garante que todos os valores são strings antes de separar
+    df['Valores'] = df['Valores'].astype(str)
+    df[['Temperatura', 'Umidade', 'Pressao']] = df['Valores'].str.split(",", expand=True).astype(float)
+    df.drop(columns="Valores", inplace=True)
 
-# Caminho do CSV
-df = pd.read_csv('data/DATA.csv', sep=';', names=["DataHora", "Valores"])
+    # Convertendo datas
+    df["DataHora"] = pd.to_datetime(df["DataHora"], format="%d/%m/%Y %H:%M")
+    df.set_index("DataHora", inplace=True)
 
+    # Pegando datas inicial e final para o título
+    data_inicial = df.index.min().strftime("%d %b %Y")
+    data_final = df.index.max().strftime("%d %b %Y")
 
-# Separando colunas
-df['Valores'] = df['Valores'].astype(str)
-df[['Temperatura', 'Umidade', 'Pressao']] = df['Valores'].str.split(",", expand=True)
-df[['Temperatura', 'Umidade', 'Pressao']] = df['Valores'].str.split(",", expand=True).astype(float)
-df.drop(columns="Valores", inplace=True)
+    # Filtra dados por período selecionado
+    data_selecionada = st.date_input("Selecione o período", [df.index.min(), df.index.max()])
+    df_filtrado = df.loc[data_selecionada[0]:data_selecionada[1]]
 
-# Convertendo data
-df["DataHora"] = pd.to_datetime(df["DataHora"], format="%d/%m/%Y %H:%M")
-df.set_index("DataHora", inplace=True)
+    # ----------- GRÁFICO 1: TEMPERATURA -----------
+    fig_temp = go.Figure()
 
-# Pegando datas inicial e final para o título
-data_inicial = df.index.min().strftime("%d %b %Y")
-data_final = df.index.max().strftime("%d %b %Y")
+    fig_temp.add_trace(go.Scatter(
+        x=df_filtrado.index,
+        y=df_filtrado['Temperatura'],
+        mode='lines',
+        name='Temperatura (°C)',
+        line=dict(color='red')
+    ))
 
-# ----------- GRÁFICO 1: TEMPERATURA -----------
-fig_temp = go.Figure()
+    fig_temp.update_layout(
+        title=f"Temperatura (°C) — {data_inicial} até {data_final}",
+        xaxis=dict(
+            title='Data',
+            rangeslider=dict(visible=True),
+            type='date',
+            showgrid=True
+        ),
+        yaxis=dict(title='Temperatura (°C)', showgrid=True),
+        template='plotly_white',
+        height=400
+    )
 
-fig_temp.add_trace(go.Scatter(
-    x=df.index,
-    y=df['Temperatura'],
-    mode='lines',
-    name='Temperatura (°C)',
-    line=dict(color='red')
-))
+    # ----------- GRÁFICO 2: UMIDADE -----------
+    fig_umid = go.Figure()
 
-fig_temp.update_layout(
-    title=f"Temperatura (°C) — {data_inicial} até {data_final}",
-    xaxis=dict(
-        title='Data',
-       # rangeslider=dict(visible=True),
-        type='date',
-        showgrid=True
-    ),
-    yaxis=dict(title='Temperatura (°C)', showgrid=True),
-    template='plotly_white',
-    height=400
-)
+    fig_umid.add_trace(go.Scatter(
+        x=df_filtrado.index,
+        y=df_filtrado['Umidade'],
+        mode='lines',
+        name='Umidade Relativa (%)',
+        line=dict(color='blue')
+    ))
 
-# ----------- GRÁFICO 2: UMIDADE -----------
-fig_umid = go.Figure()
+    fig_umid.update_layout(
+        title=f"Umidade Relativa (%) — {data_inicial} até {data_final}",
+        xaxis=dict(
+            title='Data',
+            rangeslider=dict(visible=True),
+            type='date',
+            showgrid=True
+        ),
+        yaxis=dict(title='Umidade (%)', showgrid=True),
+        template='plotly_white',
+        height=400
+    )
 
-fig_umid.add_trace(go.Scatter(
-    x=df.index,
-    y=df['Umidade'],
-    mode='lines',
-    name='Umidade Relativa (%)',
-    line=dict(color='blue')
-))
+    # ----------- GRÁFICO 3: PRESSÃO -----------
+    fig_press = go.Figure()
 
-fig_umid.update_layout(
-    title=f"Umidade Relativa (%) — {data_inicial} até {data_final}",
-    xaxis=dict(
-        title='Data',
-       # rangeslider=dict(visible=True),
-        type='date',
-        showgrid=True
-    ),
-    yaxis=dict(title='Umidade (%)', showgrid=True),
-    template='plotly_white',
-    height=400
-)
+    fig_press.add_trace(go.Scatter(
+        x=df_filtrado.index,
+        y=df_filtrado['Pressao'],
+        mode='lines',
+        name='Pressao (hPa)',
+        line=dict(color='green')
+    ))
 
-# ----------- GRÁFICO 3: PRESS -----------
-fig_press = go.Figure()
+    fig_press.update_layout(
+        title=f"Pressao (hPa) — {data_inicial} até {data_final}",
+        xaxis=dict(
+            title='Data',
+            rangeslider=dict(visible=True),
+            type='date',
+            showgrid=True
+        ),
+        yaxis=dict(title='Pressao (hPa)', showgrid=True),
+        template='plotly_white',
+        height=400
+    )
 
-fig_press.add_trace(go.Scatter(
-    x=df.index,
-    y=df['Pressao'],
-    mode='lines',
-    name='Pressao (hPa)',
-    line=dict(color='green')
-))
+    # ----------- STREAMLIT WEB APP -----------
+    def main():
+        st.title("Meteorologic Station Web")
+        st.header("Gráfico de Temperatura")
+        st.plotly_chart(fig_temp, use_container_width=True)
+        st.header("Gráfico de Umidade")
+        st.plotly_chart(fig_umid, use_container_width=True)
+        st.header("Gráfico de Pressão")
+        st.plotly_chart(fig_press, use_container_width=True)
 
-fig_press.update_layout(
-    title=f"Pressao (hPa) — {data_inicial} até {data_final}",
-    xaxis=dict(
-        title='Data',
-       # rangeslider=dict(visible=True),
-        type='date',
-        showgrid=True
-    ),
-    yaxis=dict(title='Pressao (hPa)', showgrid=True),
-    template='plotly_white',
-    height=400
-)
-
-
-# Mostrar os dois
-#fig_temp.show()
-#fig_umid.show()
-#fig_press.show()
-
-def main():
-    st.title("Meteorologic Station Web")
-
-    st.header("Grafico de Temperatura")
-    st.plotly_chart(fig_temp, use_container_width=True)
-    st.header("Grafico de Umidade")
-    st.plotly_chart(fig_umid, use_container_width=True)
-    st.header("Grafico de Pressao")
-    st.plotly_chart(fig_press, use_container_width=True)
-
-main()
+    main()
