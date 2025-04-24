@@ -5,8 +5,21 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
+# Upa o arquivo CSV
+uploaded_file = st.file_uploader("Escolha o arquivo CSV", type=["csv", "xls"])
+if uploaded_file is not None:
+    # Para CSV
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file, sep=';', names=["DataHora", "Valor"])
+    # Para Excel
+    elif uploaded_file.name.endswith(".xls") or uploaded_file.name.endswith(".xlsx"):
+        df = pd.read_excel(uploaded_file, names=["DataHora", "Valor"])
+    
+    st.write("Prévia dos dados:")
+    st.dataframe(df)
+
 # Caminho do CSV
-df = pd.read_csv('./DATA.CSV.xls', sep=';', names=["DataHora", "Valores"])
+df = pd.read_csv('./DATA.CSV', sep=';', names=["DataHora", "Valores"])
 
 # Separando colunas
 df[['Temperatura', 'Umidade', 'Pressao']] = df['Valores'].str.split(",", expand=True).astype(float)
